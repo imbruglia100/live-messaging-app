@@ -1,60 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import io from 'socket.io-client';
+import Messages from './Messages';
+import MessageInput from './MessageInput';
+
 import './App.css';
 
 function App() {
-  const [messages, setMessages] = useState([]);
-  const [messageInput, setMessageInput] = useState('');
-
-  // WebSocket connection setup goes here
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const socket = new WebSocket('ws://localhost:3000');
-    socket.onopen = () => {
-      console.log('WebSocket connection established.');
-    };
-
-    socket.onmessage = (event) => {
-      const receivedMessage = JSON.parse(event.data);
-      setMessages([...messages, receivedMessage]);
-    };
-
-    return () => {
-      socket.close();
-    };
-  }, [messages]);
-
-  const sendMessage = () => {
-    // Implement sending messages via WebSocket here
-      if (messageInput.trim() !== '') {
-        const message = {
-          text: messageInput,
-          timestamp: new Date().toISOString(),
-        };
-        socket.send(JSON.stringify(message));
-        setMessageInput('');
-      }
-  };
+    const newSocket = io(`http://${window.location.hostname}:3000`);
+    setSocket(newSocket);
+    return () => newSocket.close();
+  }, [setSocket]);
 
   return (
     <div className="App">
-      <div className="chat-container">
-        <div className="chat-messages">
-          {messages.map((message, index) => (
-            <div key={index} className="message">
-              {message}
-            </div>
-          ))}
+      <header className="app-header">
+        React Chat
+      </header>
+      { socket ? (
+        <div className="chat-container">
+          <Messages socket={socket} />
+          <MessageInput socket={socket} />
         </div>
-        <div className="chat-input">
-          <input
-            type="text"
-            placeholder="Type your message..."
-            value={messageInput}
-            onChange={(e) => setMessageInput(e.target.value)}
-          />
-          <button onClick={sendMessage}>Send</button>
-        </div>
-      </div>
+      ) : (
+        <div>Not Connected</div>
+      )}
     </div>
   );
 }

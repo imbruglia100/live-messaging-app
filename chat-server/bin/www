@@ -3,7 +3,8 @@
 /**
  * Module dependencies.
  */
-
+var chat = require('../chat')
+var socketio = require('socket.io')
 var app = require('../app');
 var debug = require('debug')('chat-server:server');
 var http = require('http');
@@ -20,6 +21,14 @@ app.set('port', port);
  */
 
 var server = http.createServer(app);
+var io = socketio(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+})
+
+chat(io)
 
 /**
  * Listen on provided port, on all network interfaces.
